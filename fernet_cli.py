@@ -113,7 +113,7 @@ def main():
             exit(2)
 
         for sFilename in aFilenames:
-            with fileinput.FileInput(sFilename, inplace=False, backup='.bak') as file:
+            with fileinput.FileInput(sFilename, inplace=False) as file:
                 for line in file:
                     sys.stdout.write(re.sub(r'\%(.*)\%', lambda m: replace_and_encrypt(m, sPassword, cIterations), line))    
     elif fEncrypt:

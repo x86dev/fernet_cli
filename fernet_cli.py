@@ -65,7 +65,7 @@ def replace_and_encrypt(re_match, password: str, iterations: int):
         return ("%s" % (value_enc.decode('utf-8'),))
     return ("ERROR")
 
-def print_help():
+def print_help(sImage):
     print("-d | --decrypt")
     print("    Decrypts a string.")    
     print("-e | --encrypt")
@@ -79,6 +79,13 @@ def print_help():
     print("-p | --password")
     print("    Sets the password for encryption / decryption.")
     print("")
+    print("To decrypt data:")
+    print("    %s --decrypt --password topsecret <data to decrypt>" % (sImage,))
+    print("To encrypt data:")
+    print("    %s --encrypt --password topsecret <data to encrypt>" % (sImage,))
+    print("To encrypt files:")
+    print("    %s --encrypt-file --password topsecret <path/to/file1> ... <path/to/fileN>" % (sImage,))
+    print("")
 
 def main():
 
@@ -89,6 +96,8 @@ def main():
         print(msg)
         print("For help use --help")
         sys.exit(2)
+
+    sImage       = sys.argv[0]
 
     cIterations  = 100_000
     fEncrypt     = None
@@ -109,7 +118,7 @@ def main():
         elif o in ("-i", "--iter"):
             cIterations = int(a)
         elif o in ("-h", "--help"):
-            print_help()
+            print_help(sImage)
             sys.exit(0)
         elif o in ("-p", "--password"):
             sPassword = a

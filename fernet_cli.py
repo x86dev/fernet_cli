@@ -35,22 +35,27 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-def key_derive(password: bytes, salt: bytes, iterations: int) -> bytes:
-    kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt,
-                     iterations=iterations, backend=default_backend())
-    return b64e(kdf.derive(password))
+def key_derive(sPassword: str, bySalt: bytes, cIterations: int) -> bytes:
+    kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=bySalt,
+                     iterations=cIterations, backend=default_backend())
+    return b64e(kdf.derive(sPassword.encode()))
 
-def value_encrypt(message: bytes, password: str, iterations: int) -> bytes:
-    salt = os.urandom(16)
-    key = key_derive(password.encode(), salt, iterations)
-    return b64e(b'%b%b%b' % (salt, iterations.to_bytes(4, 'big'), b64d(Fernet(key).encrypt(message)),))
+def value_encrypt(byData: bytes, sPassword: str, cIterations: int) -> bytes:
+    bySalt = os.urandom(16)
+    byKey = key_derive(sPassword, bySalt, cIterations)
+    return b64e(b'%b%b%b' % (bySalt, cIterations.to_bytes(4, 'big'), b64d(Fernet(byKey).encrypt(byData)),))
 
-def value_decrypt(token: bytes, password: str) -> bytes:
-    decoded = b64d(token)
-    salt, iter, token = decoded[:16], decoded[16:20], b64e(decoded[20:])
-    iterations = int.from_bytes(iter, 'big')
-    key = key_derive(password.encode(), salt, iterations)
-    return Fernet(key).decrypt(token)
+def value_decrypt(byData: bytes, sPassword: str) -> bytes:
+    byDataDec = b64d(byData)
+    salt, iter, byData = byDataDec[:16], byDataDec[16:20], b64e(byDataDec[20:])
+    cIterations = int.from_bytes(iter, 'big')
+    byKey = key_derive(sPassword, salt, cIterations)
+    byDecrypted = []
+    try:
+        byDecrypted = Fernet(byKey).decrypt(byData)
+    except:
+        pass
+    return byDecrypted
 
 def replace_and_encrypt(re_match, password: str, iterations: int):
     value_plain = re_match.group(1)
@@ -61,7 +66,19 @@ def replace_and_encrypt(re_match, password: str, iterations: int):
     return ("ERROR")
 
 def print_help():
-    print("No help yet, sorry.")
+    print("-d | --decrypt")
+    print("    Decrypts a string.")    
+    print("-e | --encrypt")
+    print("    Encrypts a string.")
+    print("-f | --encrypt-file")
+    print("    Encrypts a file by encrypting all data enclosed via '%<data>%'.")
+    print("-i | --iterations")
+    print("    Sets the number of KDF iterations. Default is 100.000.")
+    print("-h | --help")
+    print("    Shows this help.")
+    print("-p | --password")
+    print("    Sets the password for encryption / decryption.")
+    print("")
 
 def main():
 
@@ -76,16 +93,18 @@ def main():
     cIterations  = 100_000
     fEncrypt     = None
     fEncryptFile = None
+    sData        = ""
+    sPassword    = ""
     aFilenames   = []
 
     for o, a in aOpts:
         if o in ("-d", "--decrypt"):
             fEncrypt = False
-            sToken = a
+            sData = a
         elif o in ("-e", "--encrypt"):
             fEncrypt = True
             sPlaintext = a
-        elif o in ("-e", "--encrypt-file"):
+        elif o in ("-f", "--encrypt-file"):
             fEncryptFile = True
         elif o in ("-i", "--iter"):
             cIterations = int(a)
@@ -123,11 +142,14 @@ def main():
         byEncrypted = value_encrypt(sPlaintext.encode(), sPassword, cIterations)
         print(byEncrypted.decode('utf-8'))
     else:
-        if not sToken:
+        if not sData:
             print("Nothing to decrypt specified")
             exit(2)
-        byDecrypted = value_decrypt(sToken.encode(), sPassword)
-        print(byDecrypted.decode('utf-8'))
+        byDecrypted = value_decrypt(sData.encode(), sPassword)
+        if len(byDecrypted):
+            print(byDecrypted.decode('utf-8'))
+        else:
+            print('Invalid key')
     
 if __name__ == "__main__":
     main()

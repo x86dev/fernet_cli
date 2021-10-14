@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
 
-# Simple CLI wrapper script for encrypting / decrypting data via the 
+# Simple CLI wrapper script for encrypting / decrypting data via the
 # Fernet scheme (symmetric encryption).
 # For more info visit: https://github.com/fernet/spec/blob/master/Spec.md
 
 # Disclaimer: Use at your own risk. I'm by no means a crypto expert!
 
 # Copyright (C) 2020 x86dev / Andreas Löffler
-#  
+#
 # This script is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This script is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this script.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -27,7 +27,6 @@ import re
 import os
 import sys
 
-import secrets
 from base64 import urlsafe_b64encode as b64e, urlsafe_b64decode as b64d
 
 from cryptography.fernet import Fernet
@@ -47,8 +46,8 @@ def value_encrypt(byData: bytes, sPassword: str, cIterations: int) -> bytes:
 
 def value_decrypt(byData: bytes, sPassword: str) -> bytes:
     byDataDec = b64d(byData)
-    salt, iter, byData = byDataDec[:16], byDataDec[16:20], b64e(byDataDec[20:])
-    cIterations = int.from_bytes(iter, 'big')
+    salt, it, byData = byDataDec[:16], byDataDec[16:20], b64e(byDataDec[20:])
+    cIterations = int.from_bytes(it, 'big')
     byKey = key_derive(sPassword, salt, cIterations)
     byDecrypted = []
     try:
@@ -62,12 +61,12 @@ def replace_and_encrypt(re_match, password: str, iterations: int):
     value_enc = value_encrypt(bytes(value_plain, 'utf-8'), password, iterations)
     value_dec = value_decrypt(value_enc, password)
     if bytearray(value_dec) == bytearray(value_plain, 'utf-8'):
-        return ("%s" % (value_enc.decode('utf-8'),))
-    return ("ERROR")
+        return "%s" % (value_enc.decode('utf-8'),)
+    return "ERROR"
 
 def print_help(sImage):
     print("-d | --decrypt")
-    print("    Decrypts a string.")    
+    print("    Decrypts a string.")
     print("-e | --encrypt")
     print("    Encrypts a string.")
     print("-f | --encrypt-file")
@@ -136,14 +135,14 @@ def main():
 
     if fEncryptFile:
         aFilenames = aArgs
-        if not len(aFilenames):
+        if not aFilenames:
             print("No file name(s) specified")
             exit(2)
 
         for sFilename in aFilenames:
             with fileinput.FileInput(sFilename, inplace=False) as file:
                 for line in file:
-                    sys.stdout.write(re.sub(r'\%(.*)\%', lambda m: replace_and_encrypt(m, sPassword, cIterations), line))    
+                    sys.stdout.write(re.sub(r'\%(.*)\%', lambda m: replace_and_encrypt(m, sPassword, cIterations), line))
     elif fEncrypt:
         if not sPlaintext:
             print("Nothing to encrypt specified")
@@ -155,10 +154,10 @@ def main():
             print("Nothing to decrypt specified")
             exit(2)
         byDecrypted = value_decrypt(sData.encode(), sPassword)
-        if len(byDecrypted):
+        if byDecrypted:
             print(byDecrypted.decode('utf-8'))
         else:
             print('Invalid key')
-    
+
 if __name__ == "__main__":
     main()

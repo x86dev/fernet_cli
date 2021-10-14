@@ -128,7 +128,7 @@ def main():
     if  fEncrypt is None \
     and fEncryptFile is None:
         print("No mode (decrypt / encrypt) specified")
-        exit(2)
+        sys.exit(2)
 
     if cIterations < 100_000:
         print("Warning: Less than 100.000 iterations are not recommended!")
@@ -137,7 +137,7 @@ def main():
         aFilenames = aArgs
         if not aFilenames:
             print("No file name(s) specified")
-            exit(2)
+            sys.exit(2)
 
         for sFilename in aFilenames:
             with fileinput.FileInput(sFilename, inplace=False) as file:
@@ -146,13 +146,13 @@ def main():
     elif fEncrypt:
         if not sPlaintext:
             print("Nothing to encrypt specified")
-            exit(2)
+            sys.exit(2)
         byEncrypted = value_encrypt(sPlaintext.encode(), sPassword, cIterations)
         print(byEncrypted.decode('utf-8'))
     else:
         if not sData:
             print("Nothing to decrypt specified")
-            exit(2)
+            sys.exit(2)
         byDecrypted = value_decrypt(sData.encode(), sPassword)
         if byDecrypted:
             print(byDecrypted.decode('utf-8'))
